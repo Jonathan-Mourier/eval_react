@@ -24,7 +24,13 @@ function DisplayWeather(props){
   return(
     <>
     <div><b>{props.weather.temperature}°C</b></div>
-    <div>{props.weather.condition}</div>
+    
+    {props.weather.condition==="sunny" && <div>Soleil</div>}
+    {props.weather.condition==="cloudy" && <div>Nuages</div>}
+    {props.weather.condition==="stormy" && <div>Tempête</div>}
+    {props.weather.condition==="windy" && <div>Nuages</div>}
+    {props.weather.condition==="rainy" && <div>Pluie</div>}
+
     {props.weather.condition==="sunny" && <IconSun />}
     {props.weather.condition==="cloudy" && <IconCloud />}
     {props.weather.condition==="stormy" && <IconStorm />}
@@ -35,26 +41,16 @@ function DisplayWeather(props){
 }
 
 function DisplayHint(props){
-  switch (props.weather.condition) {
-    case "sunny":
-      return <div>Prenez des lunettes de soleil</div>
-      break;
-    case "cloudy":
-      return <div>Sortez la tête des nuages</div>
-      break;
-    case "windy":
-      return <div>Pensez à bien vous couvrir</div>
-      break;
-    case "stormy":
-      return <div>Accrochez-vous bien</div>
-      break;
-    case "rainy":
-      return <div>Prenez un parapluie</div>
-      break;
-    default:
-      return <div></div>
-      break;
-  }
+  return(
+    <>
+    {props.loading && <div>Chargement...</div>}
+    {props.weather.condition==="sunny" && <div>Prenez des lunettes de soleil</div>}
+    {props.weather.condition==="cloudy" && <div>Sortez la tête des nuages</div>}
+    {props.weather.condition==="stormy" && <div>Accrochez-vous bien</div>}
+    {props.weather.condition==="windy" && <div>Pensez à bien vous couvrir</div>}
+    {props.weather.condition==="rainy" && <div>Prenez un parapluie</div>}
+    </>
+  );
 }
 
 function IconMagnifyingGlass(props) {
@@ -151,6 +147,7 @@ function IconStorm(props) {
 function App() {
   const [city, setCity] = React.useState("");
   const [weather, setWeather] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
 
   React.useEffect(() => {
     if (navigator.geolocation && !city) {
@@ -159,12 +156,16 @@ function App() {
         var latitude = position.coords.latitude,
           longitude = position.coords.longitude;
         console.log(latitude + " " + longitude);
+        setLoading(true)
         fetch('https://jb03dcnv74.execute-api.eu-west-1.amazonaws.com/Prod/geo?lon='+longitude+'&lat='+latitude)
           .then(response => response.json())
-          .then(json => setCity(json.city))
-          .catch(error => console.error(error)); 
+          .then(json => {
+            setCity(json.city);
+            setLoading(false);
+          })
+          .catch(error => alert(error)); 
       },
-      (err) => console.log(err)
+      (err) => alert(err)
       ); 
     }
   },[])
@@ -172,10 +173,14 @@ function App() {
    
   React.useEffect(() => {
     if (city){
+      setLoading(true);
       fetch('https://jb03dcnv74.execute-api.eu-west-1.amazonaws.com/Prod/weather/'+city)
       .then(response => response.json())
-      .then(json => setWeather({temperature:json.temperature ,condition:json.condition}))
-      .catch(error => console.error(error));  
+      .then(json => {
+        setWeather({temperature:json.temperature ,condition:json.condition});
+        setLoading(false);
+      })
+      .catch(error => alert(error));  
     }  
   }, [city]);
 
@@ -187,7 +192,7 @@ function App() {
     <hr />
     <DisplayWeather weather={weather}/>
     <hr />
-    <DisplayHint weather={weather}/>
+    <DisplayHint weather={weather} loading={loading}/>
     </>
   );
 }
